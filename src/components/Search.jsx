@@ -118,7 +118,7 @@ function Search() {
         {/* Dog Cards Grid */}
         <Grid2 id="grid_container" className="grid_container" container spacing={3}>
           {dogs.map((dog) => (
-            <Grid2 item xs={12} sm={6} md={4} key={dog.id}>
+            <Grid2 xs={12} sm={6} md={4} key={dog.id}>
               <DogCard dog={dog} />
             </Grid2>
           ))}
