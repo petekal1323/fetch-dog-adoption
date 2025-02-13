@@ -1,5 +1,8 @@
 // src/components/Search.jsx
 import { useState, useEffect } from 'react';
+import axios from 'axios';
+import DogCard from './DogCard';
+import styles from './Search.module.css';
 import {
   Container,
   Typography,
@@ -12,15 +15,12 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import axios from 'axios';
-import DogCard from './DogCard';
-import styles from './Search.module.css';
 
 function Search() {
   const [dogs, setDogs] = useState([]);
   const [breedFilter, setBreedFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState([0]);
   const [total, setTotal] = useState(0);
   const pageSize = 24; // number of results per page i chose 24 so it would look good with 4 across on each row
 
