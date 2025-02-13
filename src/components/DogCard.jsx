@@ -1,8 +1,8 @@
 // src/components/DogCard.jsx
 import PropTypes from 'prop-types';
 import { Card, CardMedia, CardContent, Typography, IconButton } from '@mui/material';
-import { FavoriteIcon } from '@mui/icons-material/Favorite';
-import { FavoriteBorderIcon } from '@mui/icons-material/FavoriteBorder';
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 
 function DogCard({ dog, isFavorite, onFavoriteToggle }) {
@@ -20,7 +20,7 @@ function DogCard({ dog, isFavorite, onFavoriteToggle }) {
           onClick={() => {
             onFavoriteToggle(dog.id)
           }}
-          aria-label="toggle favorite">{isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon/>}
+          aria-label="toggle favorite">{isFavorite ? <FavoriteIcon sx={{ color: '#ff69b4' }} /> : <FavoriteBorderIcon sx={{ color: '#ff69b4' }} />}
         </IconButton>
       </CardContent>
     </Card>
