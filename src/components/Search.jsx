@@ -4,6 +4,7 @@ import axios from 'axios';
 import DogCard from './DogCard';
 import styles from './../styles/Search.module.css';
 import { Container, Typography, Box, Grid2, TextField, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
+import Pagination from './Pagination';
 
 function Search() {
   const [dogs, setDogs] = useState([]);
@@ -84,27 +85,20 @@ function Search() {
     }
   };
 
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
     <Box display="flex" alignItems="center" justifyContent="center" minHeight="100vh">
       <Container maxWidth="lg" className={styles.searchWrapper}>
-        
+
 
         {/* Pagination Controls */}
-        <Box display="flex" justifyContent="center" alignItems="center" paddingBlock="20px" mt={3} gap={2}>
-          <Button variant="outlined" disabled={page === 0} onClick={() => setPage(page - 1)}>
-            Previous
-          </Button>
-          <Typography variant="body1">
-            Page {page + 1} of {Math.ceil(total / pageSize)}
-          </Typography>
-          <Button
-            variant="outlined"
-            disabled={dogs.length < pageSize}
-            onClick={() => setPage(page + 1)}
-          >
-            Next
-          </Button>
-        </Box>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPrevious={() => setPage(page - 1)}
+          onNext={() => setPage(page + 1)}
+        />
 
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Search for Your Perfect Dog
@@ -150,7 +144,7 @@ function Search() {
           {match && (
             <Box mt={2} textAlign="center">
               <Typography variant="h6">Your Match:</Typography>
-              <DogCard dog={match} isFavorite={false} onFavoriteToggle={() => {}} />
+              <DogCard dog={match} isFavorite={false} onFavoriteToggle={() => { }} />
             </Box>
           )}
         </Box>
@@ -175,21 +169,12 @@ function Search() {
         </Grid2>
 
         {/* Pagination Controls (Bottom) */}
-        <Box display="flex" justifyContent="center" alignItems="center" paddingBlock="5px" marginTop="10px" mt={3} gap={1.2}>
-          <Button variant="outlined" disabled={page === 0} onClick={() => setPage(page - 1)}>
-            Previous
-          </Button>
-          <Typography variant="body1">
-            Page {page + 1} of {Math.ceil(total / pageSize)}
-          </Typography>
-          <Button
-            variant="outlined"
-            disabled={dogs.length < pageSize}
-            onClick={() => setPage(page + 1)}
-          >
-            Next
-          </Button>
-        </Box>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPrevious={() => setPage(page - 1)}
+          onNext={() => setPage(page + 1)}
+        />
       </Container>
     </Box>
   );
