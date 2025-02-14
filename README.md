@@ -29,4 +29,4 @@ To run the project locally follow the following steps in git bash or a command l
 
 Or
 
-Check out the live app here:&nbsp;[Fetch Dog Adoption](https://fetch-dog-adoption-ten.vercel.app/)
+Check out the live app here:&nbsp;&nbsp;[Fetch Dog Adoption](https://fetch-dog-adoption-ten.vercel.app/)
