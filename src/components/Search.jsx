@@ -5,6 +5,7 @@ import DogCard from './DogCard';
 import styles from './../styles/Search.module.css';
 import { Container, Typography, Box, Grid2, TextField, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 import Pagination from './Pagination';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function Search() {
   const [dogs, setDogs] = useState([]);
@@ -15,11 +16,16 @@ function Search() {
   const [total, setTotal] = useState(0);
   const [favorites, setFavorites] = useState([]);
   const [match, setMatch] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const pageSize = 24;
 
   useEffect(() => {
     console.log("useEffect triggered: breedFilter =", breedFilter, ", sortOrder =", sortOrder, ", page =", page);
     const fetchDogs = async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+
       try {
         const response = await axios.get('https://frontend-take-home-service.fetch.com/dogs/search', {
           params: {
@@ -46,6 +52,9 @@ function Search() {
         }
       } catch (error) {
         console.error('Oops! Something went wrong while fetching dogs:', error);
+        setErrorMessage('Oops! Something went wrong while fetching dogs. Please try again later.');
+      } finally {
+        setIsLoading(false);       // Stop loading once finished
       }
     };
 
@@ -149,24 +158,39 @@ function Search() {
           )}
         </Box>
 
+        {/* Loading and Error Messages */}
+        {isLoading && (
+          <CircularProgress />
+        )}
+        {errorMessage && (
+          <Typography variant="h6" align="center" color="error">
+            {errorMessage}
+          </Typography>
+        )}
+
         {/* Dog Cards Grid */}
-        <Grid2 id="grid_container" className="grid_container" alignItems="center" justifyContent="center" container spacing="10px">
-          {dogs.length > 0 ? (
-            dogs.map((dog) => (
-              <Grid2 xs={12} sm={6} md={4} key={dog.id}>
-                <DogCard
-                  dog={dog}
-                  isFavorite={favorites.includes(dog.id)}
-                  onFavoriteToggle={handleFavoriteToggle}
-                />
-              </Grid2>
-            ))
-          ) : (
-            <Typography variant="h4" align="center">
-              No dogs found.
-            </Typography>
-          )}
-        </Grid2>
+        {!isLoading && !errorMessage && (
+
+          <Grid2 id="grid_container" className="grid_container" alignItems="center" justifyContent="center" container spacing="10px">
+            {dogs.length > 0 ? (
+              dogs.map((dog) => (
+                <Grid2 xs={12} sm={6} md={4} key={dog.id}>
+                  <DogCard
+                    dog={dog}
+                    isFavorite={favorites.includes(dog.id)}
+                    onFavoriteToggle={handleFavoriteToggle}
+                  />
+                </Grid2>
+              ))
+            ) : (
+              <Typography variant="h4" align="center">
+                No dogs found.
+              </Typography>
+            )}
+          </Grid2>
+        )}
+
+
 
         {/* Pagination Controls (Bottom) */}
         <Pagination
