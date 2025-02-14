@@ -10,6 +10,8 @@ Currently, two official plugins are available:
 
 A dog adoption platform where users can search for shelter dogs, filter by breed, select favorites, and generate a match for adoption.
 
+This project helped me learn React, Vite, and Material UI. I'm continuously trying to learn.
+
 
 Features:
 User authentication (login/logout)
@@ -27,5 +29,4 @@ To run the project locally follow the following steps in git bash or a command l
 
 Or
 
-You can check this app out live here https://fetch-dog-adoption-ten.vercel.app/
-
+Check out the live app here: [Fetch Dog Adoption](https://fetch-dog-adoption-ten.vercel.app/)
