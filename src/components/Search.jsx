@@ -1,11 +1,11 @@
 // src/components/Search.jsx
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import DogCard from './DogCard';
-import styles from './../styles/Search.module.css';
 import { Container, Typography, Box, Grid2, TextField, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 import Pagination from './Pagination';
 import CircularProgress from '@mui/material/CircularProgress';
+import { searchDogs, fetchDogsDetails, fetchLocations, generateDogMatch } from '../api.js';
+
 
 function Search() {
   const [dogs, setDogs] = useState([]);
@@ -16,50 +16,62 @@ function Search() {
   const [total, setTotal] = useState(0);
   const [favorites, setFavorites] = useState([]);
   const [match, setMatch] = useState(null);
+  const [locations, setLocations] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const pageSize = 24;
+  
+
 
   useEffect(() => {
-    console.log("useEffect triggered: breedFilter =", breedFilter, ", sortOrder =", sortOrder, ", page =", page);
-    const fetchDogs = async () => {
+    console.log(breedFilter, sortOrder, page);
+    const fetchDogsData = async () => {
       setIsLoading(true);
       setErrorMessage('');
-
       try {
-        const response = await axios.get('https://frontend-take-home-service.fetch.com/dogs/search', {
-          params: {
-            breeds: breedFilter ? [breedFilter] : undefined,
-            sort: `breed:${sortOrder}`,
-            size: pageSize,
-            from: page * pageSize,
-          },
-          withCredentials: true,
+        // Search for dogs
+        const searchData = await searchDogs({
+          breeds: breedFilter ? [breedFilter] : undefined,
+          sort: `breed:${sortOrder}`,
+          size: pageSize,
+          from: page * pageSize,
         });
-
-        const { resultIds, total } = response.data;
+        const { resultIds, total } = searchData;
         setTotal(total);
-
+  
         if (resultIds && resultIds.length > 0) {
-          const dogsResponse = await axios.post(
-            'https://frontend-take-home-service.fetch.com/dogs',
-            resultIds,
-            { withCredentials: true }
-          );
-          setDogs(dogsResponse.data);
+          // Fetch dog details
+          const fetchedDogs = await fetchDogsDetails(resultIds);
+          setDogs(fetchedDogs);
+  
+          
+          const zipCodes = Array.from(new Set(fetchedDogs.map(dog => dog.zip_code)));
+          // Fetch locations for these zip codes
+          const fetchedLocations = await fetchLocations(zipCodes);
+          const locationMap = {};
+          if (Array.isArray(fetchedLocations)) {
+            fetchedLocations.forEach(loc => {
+              if (loc && loc.zip_code) {
+                locationMap[loc.zip_code] = loc;
+              }
+            });
+          }
+          setLocations(locationMap);
         } else {
           setDogs([]);
+          setLocations({});
         }
       } catch (error) {
-        console.error('Oops! Something went wrong while fetching dogs:', error);
-        setErrorMessage('Oops! Something went wrong while fetching dogs. Please try again later.');
+        console.error(error);
+        setErrorMessage('Failed to fetch dogs: ' + error);
       } finally {
-        setIsLoading(false);       // Stop loading once finished
+        setIsLoading(false);
       }
     };
-
-    fetchDogs();
+  
+    fetchDogsData();
   }, [breedFilter, sortOrder, page]);
+  
 
   const handleFavoriteToggle = (dogId) => {
     setFavorites((prevFavorites) => {
@@ -77,18 +89,10 @@ function Search() {
       return;
     }
     try {
-      const matchResponse = await axios.post(
-        'https://frontend-take-home-service.fetch.com/dogs/match',
-        favorites,
-        { withCredentials: true }
-      );
-      const matchedDogId = matchResponse.data.match;
-      const dogResponse = await axios.post(
-        'https://frontend-take-home-service.fetch.com/dogs',
-        [matchedDogId],
-        { withCredentials: true }
-      );
-      setMatch(dogResponse.data[0]);
+      const matchData = await generateDogMatch(favorites);
+      const matchedDogId = matchData.match;
+      const dogData = await fetchDogsDetails([matchedDogId]);
+      setMatch(dogData[0]);
     } catch (error) {
       console.error('Error generating match:', error);
     }
@@ -97,8 +101,8 @@ function Search() {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <Box display="flex" alignItems="center" justifyContent="center" minHeight="100vh">
-      <Container maxWidth="lg" className={styles.searchWrapper}>
+    <Box className="searchContainer" display="flex" alignItems="center" justifyContent="center" minHeight="100vh">
+      <Container maxWidth="lg" className="searchWrapper">
 
 
         {/* Pagination Controls */}
@@ -147,13 +151,18 @@ function Search() {
 
         {/* Generate Match Section */}
         <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" marginBottom="10px" paddingBlock="20px" mt={4}>
-          <Button variant="contained" color="secondary" onClick={handleGenerateMatch}>
+          <Button className='generate_match_btn' variant="contained" color="secondary" onClick={handleGenerateMatch}>
             Generate Match
           </Button>
           {match && (
             <Box mt={2} textAlign="center">
               <Typography variant="h6">Your Match:</Typography>
-              <DogCard dog={match} isFavorite={false} onFavoriteToggle={() => { }} />
+              <DogCard
+                dog={match}
+                city={locations[match.zip_code] ? locations[match.zip_code].city : 'Unknown'}
+                isFavorite={true}
+                onFavoriteToggle={() => { }}
+              />
             </Box>
           )}
         </Box>
@@ -171,12 +180,20 @@ function Search() {
         {/* Dog Cards Grid */}
         {!isLoading && !errorMessage && (
 
-          <Grid2 id="grid_container" className="grid_container" alignItems="center" justifyContent="center" container spacing="10px">
+          <Grid2
+            id="grid_container"
+            className="grid_container"
+            alignItems="center"
+            justifyContent="center"
+            container
+            spacing={2}
+          >
             {dogs.length > 0 ? (
               dogs.map((dog) => (
                 <Grid2 xs={12} sm={6} md={4} key={dog.id}>
                   <DogCard
                     dog={dog}
+                    city={locations[dog.zip_code] ? locations[dog.zip_code].city : 'Unknown'}
                     isFavorite={favorites.includes(dog.id)}
                     onFavoriteToggle={handleFavoriteToggle}
                   />
@@ -189,8 +206,6 @@ function Search() {
             )}
           </Grid2>
         )}
-
-
 
         {/* Pagination Controls (Bottom) */}
         <Pagination

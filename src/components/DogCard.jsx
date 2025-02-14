@@ -4,8 +4,7 @@ import { Card, CardMedia, CardContent, Typography, IconButton } from '@mui/mater
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
-
-function DogCard({ dog, isFavorite, onFavoriteToggle }) {
+function DogCard({ dog, city, isFavorite, onFavoriteToggle }) {
   return (
     <Card className='dog-card-container'>
       <CardMedia className='dog-card-media' component='img' height='200' image={dog.img} alt={dog.name} />
@@ -14,13 +13,13 @@ function DogCard({ dog, isFavorite, onFavoriteToggle }) {
         <Typography className='dog-card-items' variant="body2" color="text.secondary">
           Breed: {dog.breed} <br />
           Age: {dog.age} <br />
-          ZIP: {dog.zip_code}
+          ZIP: {dog.zip_code} <br />
+          City: {city}
         </Typography>
         <IconButton
-          onClick={() => {
-            onFavoriteToggle(dog.id)
-          }}
-          aria-label="toggle favorite">{isFavorite ? <FavoriteIcon sx={{ color: '#ff69b4' }} /> : <FavoriteBorderIcon sx={{ color: '#ff69b4' }} />}
+          onClick={() => onFavoriteToggle(dog.id)}
+          aria-label="toggle favorite">
+          {isFavorite ? <FavoriteIcon sx={{ color: '#ff69b4' }} /> : <FavoriteBorderIcon sx={{ color: '#ff69b4' }} />}
         </IconButton>
       </CardContent>
     </Card>
@@ -36,12 +35,14 @@ DogCard.propTypes = {
     zip_code: PropTypes.string.isRequired,
     breed: PropTypes.string.isRequired,
   }).isRequired,
+  city: PropTypes.string, // New prop for location info
   isFavorite: PropTypes.bool,
   onFavoriteToggle: PropTypes.func.isRequired,
 };
 
 DogCard.defaultProps = {
   isFavorite: false,
+  city: 'Unknown',
 };
 
 export default DogCard;

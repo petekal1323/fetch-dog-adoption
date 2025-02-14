@@ -1,19 +1,29 @@
 // src/App.jsx
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import CssBaseline from '@mui/material/CssBaseline';
 import Login from './components/Login';
 import Search from './components/Search';
+import LogoutButton from './components/LogoutButton';
 
 function App() {
   return (
-      <BrowserRouter>
-        {/* CssBaseline normalizes CSS and resets browser defaults */}
-        <CssBaseline />
+    <BrowserRouter>
+      {/* Optionally, you can wrap your routes in a layout */}
+      <div style={{ position: 'relative', minHeight: '100vh' }}>
+        {/* Show the LogoutButton only on pages other than Login */}
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/search" element={<Search />} />
+          <Route path="/search"
+            element={
+              <>
+                <LogoutButton />
+                <Search />
+              </>
+            }
+          />
         </Routes>
-      </BrowserRouter>
+      </div>
+    </BrowserRouter>
   );
 }
 

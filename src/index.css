@@ -6,3 +6,9 @@ html, body, #root {
   width: 100%;
   box-sizing: border-box;
 }
+
+
+  .searchWrapper {
+    padding-block: 3.5rem !important;
+  }
+
