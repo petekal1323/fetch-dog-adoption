@@ -20,7 +20,7 @@ function Search() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const pageSize = 24;
-  
+
 
 
   useEffect(() => {
@@ -38,15 +38,23 @@ function Search() {
         });
         const { resultIds, total } = searchData;
         setTotal(total);
-  
+
         if (resultIds && resultIds.length > 0) {
-          // Fetch dog details
           const fetchedDogs = await fetchDogsDetails(resultIds);
+
+          // If the fetched dogs array is empty and we're not on the first page,
+          // move back one page so the user sees content.
+          if (fetchedDogs.length === 0 && page > 0) {
+            setPage(page - 1);
+            return; // Exit early so we don't proceed with an empty result
+          }
+
           setDogs(fetchedDogs);
-  
-          
+
+          // get unique ZIP codes from the fetched dogs
           const zipCodes = Array.from(new Set(fetchedDogs.map(dog => dog.zip_code)));
-          // Fetch locations for these zip codes
+
+          // get location details for these zip codes
           const fetchedLocations = await fetchLocations(zipCodes);
           const locationMap = {};
           if (Array.isArray(fetchedLocations)) {
@@ -57,166 +65,165 @@ function Search() {
             });
           }
           setLocations(locationMap);
-        } else {
-          setDogs([]);
-          setLocations({});
-        }
-      } catch (error) {
-        console.error(error);
-        setErrorMessage('Failed to fetch dogs: ' + error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
-    fetchDogsData();
-  }, [breedFilter, sortOrder, page]);
-  
-
-  const handleFavoriteToggle = (dogId) => {
-    setFavorites((prevFavorites) => {
-      if (prevFavorites.includes(dogId)) {
-        return prevFavorites.filter((id) => id !== dogId);
       } else {
-        return [...prevFavorites, dogId];
+        setDogs([]);
+        setLocations({});
       }
-    });
-  };
-
-  const handleGenerateMatch = async () => {
-    if (favorites.length === 0) {
-      alert('Please select at least one favorite dog!');
-      return;
-    }
-    try {
-      const matchData = await generateDogMatch(favorites);
-      const matchedDogId = matchData.match;
-      const dogData = await fetchDogsDetails([matchedDogId]);
-      setMatch(dogData[0]);
     } catch (error) {
-      console.error('Error generating match:', error);
+      console.error(error);
+      setErrorMessage('Failed to fetch dogs: ' + error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const totalPages = Math.ceil(total / pageSize);
-
-  return (
-    <Box className="searchContainer" display="flex" alignItems="center" justifyContent="center" minHeight="100vh">
-      <Container maxWidth="lg" className="searchWrapper">
+  fetchDogsData();
+}, [breedFilter, sortOrder, page]);
 
 
-        {/* Pagination Controls */}
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPrevious={() => setPage(page - 1)}
-          onNext={() => setPage(page + 1)}
+const handleFavoriteToggle = (dogId) => {
+  setFavorites((prevFavorites) => {
+    if (prevFavorites.includes(dogId)) {
+      return prevFavorites.filter((id) => id !== dogId);
+    } else {
+      return [...prevFavorites, dogId];
+    }
+  });
+};
+
+const handleGenerateMatch = async () => {
+  if (favorites.length === 0) {
+    alert('Please select at least one favorite dog!');
+    return;
+  }
+  try {
+    const matchData = await generateDogMatch(favorites);
+    const matchedDogId = matchData.match;
+    const dogData = await fetchDogsDetails([matchedDogId]);
+    setMatch(dogData[0]);
+  } catch (error) {
+    console.error('Error generating match:', error);
+  }
+};
+
+
+const totalPages = Math.max(Math.ceil(total / pageSize) - 1, 0);
+
+return (
+  <Box className="searchContainer" display="flex" alignItems="center" justifyContent="center" minHeight="100vh">
+    <Container maxWidth="lg" className="searchWrapper">
+
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onFirst={() => setPage(0)}
+        onPrevious={() => setPage(page - 1)}
+        onNext={() => setPage(page + 1)}
+        onLast={() => setPage(totalPages - 1)}
+      />
+
+      <Typography paddingBlock="1rem" variant="h4" component="h1" gutterBottom align="center" >
+        Search for Your Perfect Dog
+      </Typography>
+
+      {/* Search Filters */}
+      <Box display="flex" justifyContent="center" flexWrap="wrap" gap={2} mb={3}>
+        <TextField
+          label="Breed Filter"
+          variant="outlined"
+          value={breedInput}
+          onChange={(e) => setBreedInput(e.target.value)}
         />
+        <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+          <InputLabel>Sort Order</InputLabel>
+          <Select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            label="Sort Order"
+          >
+            <MenuItem value="asc">Ascending</MenuItem>
+            <MenuItem value="desc">Descending</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            console.log("Apply clicked! breedInput =", breedInput);
+            setBreedFilter(breedInput);
+            setPage(0);
+          }}
+        >
+          Apply
+        </Button>
+      </Box>
 
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Search for Your Perfect Dog
+      {/* Generate Match Section */}
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" marginBottom="10px" paddingBlock="20px" mt={4}>
+        <Button className='generate_match_btn' variant="contained" color="secondary" onClick={handleGenerateMatch}>
+          Generate Match
+        </Button>
+        {match && (
+          <Box mt={2} textAlign="center">
+            <Typography variant="p">Based on your Likes!</Typography>
+            <Typography variant="h6">Your Match:</Typography>
+            <DogCard
+              dog={match}
+              city={locations[match.zip_code] ? locations[match.zip_code].city : 'Unknown'}
+              isFavorite={true}
+              onFavoriteToggle={() => { }}
+            />
+          </Box>
+        )}
+      </Box>
+
+      {/* Loading and Error Messages */}
+      {isLoading && (
+        <CircularProgress />
+      )}
+      {errorMessage && (
+        <Typography variant="h6" align="center" color="error">
+          {errorMessage}
         </Typography>
+      )}
 
-        {/* Search Filters */}
-        <Box display="flex" justifyContent="center" flexWrap="wrap" gap={2} mb={3}>
-          <TextField
-            label="Breed Filter"
-            variant="outlined"
-            value={breedInput}
-            onChange={(e) => setBreedInput(e.target.value)}
-          />
-          <FormControl variant="outlined" sx={{ minWidth: 120 }}>
-            <InputLabel>Sort Order</InputLabel>
-            <Select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              label="Sort Order"
-            >
-              <MenuItem value="asc">Ascending</MenuItem>
-              <MenuItem value="desc">Descending</MenuItem>
-            </Select>
-          </FormControl>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              console.log("Apply clicked! breedInput =", breedInput);
-              setBreedFilter(breedInput);
-              setPage(0);
-            }}
-          >
-            Apply
-          </Button>
-        </Box>
+      {/* Dog Cards Grid */}
+      {!isLoading && !errorMessage && (
 
-        {/* Generate Match Section */}
-        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" marginBottom="10px" paddingBlock="20px" mt={4}>
-          <Button className='generate_match_btn' variant="contained" color="secondary" onClick={handleGenerateMatch}>
-            Generate Match
-          </Button>
-          {match && (
-            <Box mt={2} textAlign="center">
-              <Typography variant="h6">Your Match:</Typography>
+        <Grid2
+          id="grid_container"
+          className="grid_container"
+          container
+          spacing={2}
+          justifyContent="center"
+        >
+          {dogs.map((dog) => (
+            <Grid2 xs={12} sm={8} md={4} key={dog.id} sx={{ display: 'flex', justifyContent: 'center' }}>
               <DogCard
-                dog={match}
-                city={locations[match.zip_code] ? locations[match.zip_code].city : 'Unknown'}
-                isFavorite={true}
-                onFavoriteToggle={() => { }}
+                dog={dog}
+                city={locations[dog.zip_code] ? locations[dog.zip_code].city : 'Unknown'}
+                isFavorite={favorites.includes(dog.id)}
+                onFavoriteToggle={handleFavoriteToggle}
               />
-            </Box>
-          )}
-        </Box>
+            </Grid2>
+          ))}
+        </Grid2>
+      )}
 
-        {/* Loading and Error Messages */}
-        {isLoading && (
-          <CircularProgress />
-        )}
-        {errorMessage && (
-          <Typography variant="h6" align="center" color="error">
-            {errorMessage}
-          </Typography>
-        )}
-
-        {/* Dog Cards Grid */}
-        {!isLoading && !errorMessage && (
-
-          <Grid2
-            id="grid_container"
-            className="grid_container"
-            alignItems="center"
-            justifyContent="center"
-            container
-            spacing={2}
-          >
-            {dogs.length > 0 ? (
-              dogs.map((dog) => (
-                <Grid2 xs={12} sm={6} md={4} key={dog.id}>
-                  <DogCard
-                    dog={dog}
-                    city={locations[dog.zip_code] ? locations[dog.zip_code].city : 'Unknown'}
-                    isFavorite={favorites.includes(dog.id)}
-                    onFavoriteToggle={handleFavoriteToggle}
-                  />
-                </Grid2>
-              ))
-            ) : (
-              <Typography variant="h4" align="center">
-                No dogs found.
-              </Typography>
-            )}
-          </Grid2>
-        )}
-
-        {/* Pagination Controls (Bottom) */}
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPrevious={() => setPage(page - 1)}
-          onNext={() => setPage(page + 1)}
-        />
-      </Container>
-    </Box>
-  );
+      {/* Pagination Controls (Bottom) */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onFirst={() => setPage(0)}
+        onPrevious={() => setPage(page - 1)}
+        onNext={() => setPage(page + 1)}
+        onLast={() => setPage(totalPages - 1)}
+      />
+    </Container>
+  </Box>
+);
 }
 
 export default Search;

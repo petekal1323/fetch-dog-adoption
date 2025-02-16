@@ -1,4 +1,5 @@
 // src/components/DogCard.jsx
+import "../styles/dogCard.css";
 import PropTypes from 'prop-types';
 import { Card, CardMedia, CardContent, Typography, IconButton } from '@mui/material';
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -6,7 +7,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 function DogCard({ dog, city, isFavorite, onFavoriteToggle }) {
   return (
-    <Card className='dog-card-container'>
+    <Card className='dog-card-container' sx={{ minWidth: 250, height: '100%' }}> 
       <CardMedia className='dog-card-media' component='img' height='200' image={dog.img} alt={dog.name} />
       <CardContent className='dog-card-content'>
         <Typography className='typography' variant="h4">{dog.name}</Typography>
